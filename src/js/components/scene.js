@@ -29,7 +29,7 @@ export default class Scene {
     const assets = [
       {
         name: 'matcap',
-        texture: 'img/matcap.png',
+        texture: './img/matcap.png',
       },
     ]
 
