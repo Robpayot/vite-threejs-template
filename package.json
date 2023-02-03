@@ -2,12 +2,12 @@
   "private": true,
   "name": "vite-2d-shader-template",
   "version": "0.0.0",
-  "description": "Template to make 2D Webgl effect using OGL, powered by Vite.",
+  "description": "Template to quickly code in Threejs, powered by Vite.",
   "author": "Robin Payot <robpayot@gmail.com>",
   "license": "MIT",
   "type": "module",
   "keywords": [
-    "shader",
+    "threejs",
     "vite",
     "useless",
     "fun",
@@ -38,12 +38,13 @@
     "glslify": "^7.1.1",
     "prettier": "^2.5.1",
     "sass": "^1.58.0",
+    "stats-js": "^1.0.1",
     "vite": "^4.0.1",
     "vite-plugin-glsl": "^1.0.1"
   },
   "dependencies": {
     "gsap": "^3.11.3",
     "lil-gui": "^0.17.0",
-    "ogl": "^0.0.101"
+    "three": "^0.149.0"
   }
 }

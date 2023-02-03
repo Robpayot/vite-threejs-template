@@ -1,83 +1,196 @@
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import Stats from 'stats-js'
+import LoaderManager from '@/js/managers/LoaderManager'
 import GUI from 'lil-gui'
-import { Renderer, Program, Color, Mesh, Triangle } from 'ogl'
-import vertex from '@/js/glsl/main.vert'
-import fragment from '@/js/glsl/main.frag'
 
-import glsl from 'glslify'
-
-class Scene {
+export default class Scene {
+  canvas
   renderer
-  mesh
-  program
+  scene
+  camera
+  controls
+  stats
+  width
+  height
   guiObj = {
-    offset: 1,
+    y: 0,
+    showTitle: true,
   }
+
   constructor() {
+    this.canvas = document.querySelector('.scene')
+
+    this.init()
+  }
+
+  init = async () => {
+    // Preload assets before initiating the scene
+    const assets = [
+      {
+        name: 'matcap',
+        texture: 'img/matcap.png',
+      },
+    ]
+
+    await LoaderManager.load(assets)
+
+    this.setStats()
     this.setGUI()
     this.setScene()
-    this.events()
-  }
-
-  setGUI() {
-    const gui = new GUI()
-    gui.add(this.guiObj, 'offset', 0.5, 4).onChange(this.guiChange)
-  }
-
-  setScene() {
-    const canvasEl = document.querySelector('.scene')
-    this.renderer = new Renderer({ dpr: Math.min(window.devicePixelRatio, 2), canvas: canvasEl })
-    const gl = this.renderer.gl
-    gl.clearColor(1, 1, 1, 1)
+    this.setRender()
+    this.setCamera()
+    this.setControls()
+    this.setAxesHelper()
+    this.setSphere()
 
     this.handleResize()
 
-    // Rather than using a plane (two triangles) to cover the viewport here is a
-    // triangle that includes -1 to 1 range for 'position', and 0 to 1 range for 'uv'.
-    // Excess will be out of the viewport.
+    // start RAF
+    this.events()
+  }
 
-    //         position                uv
-    //      (-1, 3)                  (0, 2)
-    //         |\                      |\
-    //         |__\(1, 1)              |__\(1, 1)
-    //         |__|_\                  |__|_\
-    //   (-1, -1)   (3, -1)        (0, 0)   (2, 0)
-
-    const geometry = new Triangle(gl)
-
-    this.program = new Program(gl, {
-      vertex: glsl(vertex),
-      fragment: glsl(fragment),
-      uniforms: {
-        uTime: { value: 0 },
-        uColor: { value: new Color(0.3, 0.2, 0.5) },
-        uOffset: { value: this.guiObj.offset },
-      },
+  /**
+   * Our Webgl renderer, an object that will draw everything in our canvas
+   * https://threejs.org/docs/?q=rend#api/en/renderers/WebGLRenderer
+   */
+  setRender() {
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      antialias: true,
     })
-
-    this.mesh = new Mesh(gl, { geometry, program: this.program })
   }
 
+  /**
+   * This is our scene, we'll add any object
+   * https://threejs.org/docs/?q=scene#api/en/scenes/Scene
+   */
+  setScene() {
+    this.scene = new THREE.Scene()
+    this.scene.background = new THREE.Color(0xffffff)
+  }
+
+  /**
+   * Our Perspective camera, this is the point of view that we'll have
+   * of our scene.
+   * A perscpective camera is mimicing the human eyes so something far we'll
+   * look smaller than something close
+   * https://threejs.org/docs/?q=pers#api/en/cameras/PerspectiveCamera
+   */
+  setCamera() {
+    const aspectRatio = this.width / this.height
+    const fieldOfView = 60
+    const nearPlane = 0.1
+    const farPlane = 10000
+
+    this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
+    this.camera.position.y = 5
+    this.camera.position.x = 5
+    this.camera.position.z = 5
+    this.camera.lookAt(0, 0, 0)
+
+    this.scene.add(this.camera)
+  }
+
+  /**
+   * Threejs controls to have controls on our scene
+   * https://threejs.org/docs/?q=orbi#examples/en/controls/OrbitControls
+   */
+  setControls() {
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+    this.controls.enableDamping = true
+    // this.controls.dampingFactor = 0.04
+  }
+
+  /**
+   * Axes Helper
+   * https://threejs.org/docs/?q=Axesh#api/en/helpers/AxesHelper
+   */
+  setAxesHelper() {
+    const axesHelper = new THREE.AxesHelper(3)
+    this.scene.add(axesHelper)
+  }
+
+  /**
+   * Create a BoxGeometry
+   * https://threejs.org/docs/?q=box#api/en/geometries/SphereGeometry
+   * with a Basic material
+   * https://threejs.org/docs/?q=mesh#api/en/materials/MeshBasicMaterial
+   */
+  setSphere() {
+    const geometry = new THREE.SphereGeometry(1, 32, 32)
+    const material = new THREE.MeshMatcapMaterial({ matcap: LoaderManager.assets['matcap'].texture })
+
+    this.mesh = new THREE.Mesh(geometry, material)
+    this.scene.add(this.mesh)
+  }
+
+  /**
+   * Build stats to display fps
+   */
+  setStats() {
+    this.stats = new Stats()
+    this.stats.showPanel(0)
+    document.body.appendChild(this.stats.dom)
+  }
+
+  setGUI() {
+    const titleEl = document.querySelector('.main-title')
+    const gui = new GUI()
+    gui.add(this.guiObj, 'y', -3, 3).onChange(this.guiChange)
+    gui
+      .add(this.guiObj, 'showTitle')
+      .name('show title')
+      .onChange(() => {
+        titleEl.style.display = this.guiObj.showTitle ? 'block' : 'none'
+      })
+  }
+  /**
+   * List of events
+   */
   events() {
-    window.addEventListener('resize', this.handleResize, false)
-    requestAnimationFrame(this.handleRAF)
+    window.addEventListener('resize', this.handleResize, { passive: true })
+    this.draw(0)
   }
 
+  // EVENTS
+
+  /**
+   * Request animation frame function
+   * This function is called 60/time per seconds with no performance issue
+   * Everything that happens in the scene is drawed here
+   * @param {Number} now
+   */
+  draw = () => {
+    // now: time in ms
+    this.stats.begin()
+
+    if (this.controls) this.controls.update() // for damping
+    this.renderer.render(this.scene, this.camera)
+
+    this.stats.end()
+    this.raf = window.requestAnimationFrame(this.draw)
+  }
+
+  /**
+   * On resize, we need to adapt our camera based
+   * on the new window width and height and the renderer
+   */
   handleResize = () => {
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
+    this.width = window.innerWidth
+    this.height = window.innerHeight
+
+    // Update camera
+    this.camera.aspect = this.width / this.height
+    this.camera.updateProjectionMatrix()
+
+    const DPR = window.devicePixelRatio ? window.devicePixelRatio : 1
+
+    this.renderer.setPixelRatio(DPR)
+    this.renderer.setSize(this.width, this.height)
   }
 
-  handleRAF = (t) => {
-    requestAnimationFrame(this.handleRAF)
-
-    this.program.uniforms.uTime.value = t * 0.001
-
-    // Don't need a camera if camera uniforms aren't required
-    this.renderer.render({ scene: this.mesh })
-  }
-
-  guiChange = (value) => {
-    this.program.uniforms.uOffset.value = value
+  guiChange = () => {
+    if (this.mesh) this.mesh.position.y = this.guiObj.y
   }
 }
-
-export default Scene
