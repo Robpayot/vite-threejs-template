@@ -1,4 +1,13 @@
-import * as THREE from 'three'
+import {
+  Color,
+  WebGLRenderer,
+  Scene,
+  PerspectiveCamera,
+  Mesh,
+  SphereGeometry,
+  MeshMatcapMaterial,
+  AxesHelper,
+} from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import Stats from 'stats-js'
 import LoaderManager from '@/js/managers/LoaderManager'
@@ -6,7 +15,7 @@ import GUI from 'lil-gui'
 
 import matcapUrl from '@/img/matcap.png'
 
-export default class Scene {
+export default class MainScene {
   canvas
   renderer
   scene
@@ -44,6 +53,7 @@ export default class Scene {
     this.setCamera()
     this.setControls()
     this.setAxesHelper()
+
     this.setSphere()
 
     this.handleResize()
@@ -57,7 +67,7 @@ export default class Scene {
    * https://threejs.org/docs/?q=rend#api/en/renderers/WebGLRenderer
    */
   setRender() {
-    this.renderer = new THREE.WebGLRenderer({
+    this.renderer = new WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
     })
@@ -68,8 +78,8 @@ export default class Scene {
    * https://threejs.org/docs/?q=scene#api/en/scenes/Scene
    */
   setScene() {
-    this.scene = new THREE.Scene()
-    this.scene.background = new THREE.Color(0xffffff)
+    this.scene = new Scene()
+    this.scene.background = new Color(0xffffff)
   }
 
   /**
@@ -85,7 +95,7 @@ export default class Scene {
     const nearPlane = 0.1
     const farPlane = 10000
 
-    this.camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
+    this.camera = new PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
     this.camera.position.y = 5
     this.camera.position.x = 5
     this.camera.position.z = 5
@@ -109,21 +119,21 @@ export default class Scene {
    * https://threejs.org/docs/?q=Axesh#api/en/helpers/AxesHelper
    */
   setAxesHelper() {
-    const axesHelper = new THREE.AxesHelper(3)
+    const axesHelper = new AxesHelper(3)
     this.scene.add(axesHelper)
   }
 
   /**
-   * Create a BoxGeometry
+   * Create a SphereGeometry
    * https://threejs.org/docs/?q=box#api/en/geometries/SphereGeometry
    * with a Basic material
    * https://threejs.org/docs/?q=mesh#api/en/materials/MeshBasicMaterial
    */
   setSphere() {
-    const geometry = new THREE.SphereGeometry(1, 32, 32)
-    const material = new THREE.MeshMatcapMaterial({ matcap: LoaderManager.assets['matcap'].texture })
+    const geometry = new SphereGeometry(1, 32, 32)
+    const material = new MeshMatcapMaterial({ matcap: LoaderManager.assets['matcap'].texture })
 
-    this.mesh = new THREE.Mesh(geometry, material)
+    this.mesh = new Mesh(geometry, material)
     this.scene.add(this.mesh)
   }
 

@@ -1,21 +1,24 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextureLoader } from 'three'
 
 class LoaderManager {
+  assets
   constructor() {
-    this.assets = {}
+    this.assets = {} // Dictionary of assets, can be different type, gltf, texture, img, font, feel free to make a Enum if using TypeScript
 
     this.textureLoader = new TextureLoader()
     this.GLTFLoader = new GLTFLoader()
     this.DRACOLoader = new DRACOLoader()
+    this.FontLoader = new FontLoader()
   }
 
   load = (data) =>
     new Promise((resolve) => {
       const promises = []
       for (let i = 0; i < data.length; i++) {
-        const { name, gltf, texture, img } = data[i]
+        const { name, gltf, texture, img, font } = data[i]
 
         if (!this.assets[name]) {
           this.assets[name] = {}
@@ -31,6 +34,10 @@ class LoaderManager {
 
         if (img) {
           promises.push(this.loadImage(img, name))
+        }
+
+        if (font) {
+          promises.push(this.loadFont(font, name))
         }
       }
 
@@ -78,6 +85,33 @@ class LoaderManager {
       }
 
       image.src = url
+    })
+  }
+
+  loadFont(url, name) {
+    // you can convert font to typeface.json using https://gero3.github.io/facetype.js/
+    return new Promise((resolve) => {
+      this.FontLoader.load(
+        url,
+
+        // onLoad callback
+        (font) => {
+          this.assets[name].font = font
+          resolve(font)
+        },
+
+        // onProgress callback
+        () =>
+          // xhr
+          {
+            // console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+          },
+
+        // onError callback
+        (err) => {
+          console.log('An error happened', err)
+        }
+      )
     })
   }
 }
