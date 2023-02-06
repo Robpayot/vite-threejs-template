@@ -1,4 +1,5 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextureLoader } from 'three'
@@ -10,6 +11,7 @@ class LoaderManager {
 
     this.textureLoader = new TextureLoader()
     this.GLTFLoader = new GLTFLoader()
+    this.OBJLoader = new OBJLoader()
     this.DRACOLoader = new DRACOLoader()
     this.FontLoader = new FontLoader()
   }
@@ -18,7 +20,7 @@ class LoaderManager {
     new Promise((resolve) => {
       const promises = []
       for (let i = 0; i < data.length; i++) {
-        const { name, gltf, texture, img, font } = data[i]
+        const { name, gltf, texture, img, font, obj } = data[i]
 
         if (!this.assets[name]) {
           this.assets[name] = {}
@@ -38,6 +40,10 @@ class LoaderManager {
 
         if (font) {
           promises.push(this.loadFont(font, name))
+        }
+
+        if (obj) {
+          promises.push(this.loadObj(obj, name))
         }
       }
 
@@ -108,6 +114,32 @@ class LoaderManager {
           },
 
         // onError callback
+        (err) => {
+          console.log('An error happened', err)
+        }
+      )
+    })
+  }
+
+  // https://threejs.org/docs/#examples/en/loaders/OBJLoader
+  loadObj(url, name) {
+    return new Promise((resolve) => {
+      // load a resource
+      this.OBJLoader.load(
+        // resource URL
+        url,
+        // called when resource is loaded
+        (object) => {
+          this.assets[name].obj = object
+          resolve(object)
+        },
+        // onProgress callback
+        () =>
+          // xhr
+          {
+            // console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+          },
+        // called when loading has errors
         (err) => {
           console.log('An error happened', err)
         }

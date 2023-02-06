@@ -19,7 +19,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build --emptyOutDir",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
     "@babel/core": "^7.19.3",
@@ -34,6 +35,7 @@
     "eslint-plugin-html": "^6.2.0",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-prettier": "^4.0.0",
+    "gh-pages": "^5.0.0",
     "glsl-noise": "^0.0.0",
     "glslify": "^7.1.1",
     "prettier": "^2.5.1",

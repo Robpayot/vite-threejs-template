@@ -13,8 +13,6 @@ import Stats from 'stats-js'
 import LoaderManager from '@/js/managers/LoaderManager'
 import GUI from 'lil-gui'
 
-import matcapUrl from '@/img/matcap.png'
-
 export default class MainScene {
   canvas
   renderer
@@ -40,7 +38,7 @@ export default class MainScene {
     const assets = [
       {
         name: 'matcap',
-        texture: matcapUrl,
+        texture: './img/matcap.png',
       },
     ]
 
