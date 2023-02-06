@@ -6,7 +6,7 @@ This repository will help creating 3D environment using [Threejs](https://threej
 
 It is also including a LoaderManager JS file to easily load your assets: (Image, Textures, 3D models...) in one function.
 
-## [See it live](https://robpayot.github.io/vite-threejs-template/dist/)
+## [See it live](https://robpayot.github.io/vite-threejs-template/)
 
 ## How to install
 
