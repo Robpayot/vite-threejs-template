@@ -20,7 +20,7 @@
     "dev": "vite",
     "build": "vite build --emptyOutDir",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
+    "deploy": "vite build --emptyOutDir && gh-pages -d dist"
   },
   "devDependencies": {
     "@babel/core": "^7.19.3",
