@@ -1,3 +1,6 @@
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1024px;
+
 @mixin respond-to($point) {
   @if $point == desktop {
     @media only screen and (min-width: $breakpoint-tablet + 1) {
