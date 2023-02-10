@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import glsl from 'vite-plugin-glsl'
+import glslify from 'rollup-plugin-glslify'
 import * as path from 'path'
 
 export default defineConfig({
@@ -16,5 +16,5 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  plugins: [glsl()],
+  plugins: [glslify()],
 })
