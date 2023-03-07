@@ -23,6 +23,7 @@ import Stats from 'stats-js'
 import LoaderManager from '@/js/managers/LoaderManager'
 import GUI from 'lil-gui'
 import { degToRad } from 'three/src/math/MathUtils'
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 
 export default class MainScene {
   canvas
@@ -51,6 +52,7 @@ export default class MainScene {
         name: 'matcap',
         texture: './img/matcap.png',
       },
+      { name: 'robotoSlabFont', font: './fonts/Roboto_Slab_Regular.typeface.json' },
     ]
 
     await LoaderManager.load(assets)
@@ -61,9 +63,10 @@ export default class MainScene {
     this.setRender()
     this.setCamera()
     this.setControls()
-    this.setAxesHelper()
+    // this.setAxesHelper()
 
     this.setSphere()
+    this.setText()
     this.setGroundMirror()
     this.setGround()
 
@@ -144,9 +147,48 @@ export default class MainScene {
     const geometry = new SphereGeometry(1, 32, 32)
     const material = new MeshMatcapMaterial({ matcap: LoaderManager.assets['matcap'].texture })
 
-    this.mesh = new Mesh(geometry, material)
-    this.mesh.position.y = 1
-    this.scene.add(this.mesh)
+    this.sphereMesh = new Mesh(geometry, material)
+    this.sphereMesh.position.y = 1
+    this.sphereMesh.position.x = -5
+    this.sphereMesh.position.z = -5
+    this.scene.add(this.sphereMesh)
+  }
+
+  /**
+   * TextGeometry
+   * https://threejs.org/docs/?q=text#examples/en/geometries/TextGeometry
+   */
+  setText() {
+    // One of the best way to use texts in Three.JS is to use MSDF Fonts, I'll write a tutorial about it
+    // but for the purpose of this example, TextGeometry is great enough
+    const textGeo = new TextGeometry('How To Code That?', {
+      font: LoaderManager.assets['robotoSlabFont'].font,
+      size: 0.8,
+      height: 0.25,
+      curveSegments: 12,
+      bevelEnabled: false,
+      // bevelThickness: 10,
+      // bevelSize: 8,
+      // bevelOffset: 0,
+      // bevelSegments: 5,
+    })
+
+    textGeo.computeBoundingBox()
+
+    const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x)
+
+    // Get CSS var color
+    const style = window.getComputedStyle(document.body)
+    const color = style.getPropertyValue('--color-orange').replace(' ', '')
+
+    const textMat = new MeshBasicMaterial({ color: new Color(0xffffff) })
+    this.textMesh = new Mesh(textGeo, textMat)
+
+    this.textMesh.position.x = centerOffset
+    this.textMesh.position.y = 0
+    this.textMesh.position.z = 0
+
+    this.scene.add(this.textMesh)
   }
 
   setGround() {
@@ -157,10 +199,10 @@ export default class MainScene {
     // mesh.position.y = 5
     // this.scene.add(mesh)
 
-    this.scene.background = new Color(0xB3EFFF)
-    this.scene.fog = new Fog(0xB3EFFF, 10, 500000)
+    this.scene.background = new Color(0xb3efff)
+    this.scene.fog = new Fog(0xb3efff, 10, 500000)
 
-    const hemiLight = new HemisphereLight(0xFC7F44, 0x000000)
+    const hemiLight = new HemisphereLight(0xfc7f44, 0x000000)
     hemiLight.position.set(0, 20, 0)
     this.scene.add(hemiLight)
 
@@ -179,7 +221,10 @@ export default class MainScene {
 
     // ground
 
-    const mesh = new Mesh(new PlaneGeometry(1000000, 1000000), new MeshBasicMaterial({ color: 0xf8c291, depthWrite: false, side: DoubleSide }))
+    const mesh = new Mesh(
+      new PlaneGeometry(1000000, 1000000),
+      new MeshBasicMaterial({ color: 0xf8c291, depthWrite: false, side: DoubleSide })
+    )
     mesh.rotation.x = -Math.PI / 2
     // mesh.receiveShadow = true
 
@@ -238,12 +283,14 @@ export default class MainScene {
    * Everything that happens in the scene is drawed here
    * @param {Number} now
    */
-  draw = () => {
+  draw = (time) => {
     // now: time in ms
     this.stats.begin()
 
     if (this.controls) this.controls.update() // for damping
     this.renderer.render(this.scene, this.camera)
+
+    this.sphereMesh.position.y = Math.sin(time / 1000) + 2
 
     this.stats.end()
     this.raf = window.requestAnimationFrame(this.draw)
