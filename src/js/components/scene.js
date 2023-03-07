@@ -27,6 +27,8 @@ import LoaderManager from '@/js/managers/LoaderManager'
 import GUI from 'lil-gui'
 import { degToRad } from 'three/src/math/MathUtils'
 import { Refractor } from 'three/addons/objects/Refractor.js'
+import vertexShader from '../glsl/main.vert'
+import fragmentShader from '../glsl/main.frag'
 
 export default class MainScene {
   canvas
@@ -73,7 +75,7 @@ export default class MainScene {
     this.setText()
     this.setGroundMirror()
     this.setGround()
-    this.setGroundRefractor()
+    // this.setGroundRefractor()
 
     this.handleResize()
 
@@ -255,37 +257,29 @@ export default class MainScene {
     const geometry = new CircleGeometry(20, 64)
     // Use Reflector
     // https://github.com/mrdoob/three.js/blob/master/examples/jsm/objects/Reflector.js
+
+    const customShader = Reflector.ReflectorShader
+    customShader.vertexShader = vertexShader
+    customShader.fragmentShader = fragmentShader
+
+    const dudvMap = LoaderManager.assets['waterdudv'].texture
+    dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping
+    customShader.uniforms.tDudv = { value: dudvMap }
+    customShader.uniforms.waveStrength = { value: 0.1 }
+    customShader.uniforms.time = { value: 0 }
+
+    // https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/WaterRefractionShader.js
     this.groundMirror = new Reflector(geometry, {
       clipBias: 0.03,
       textureWidth: window.innerWidth * window.devicePixelRatio,
       textureHeight: window.innerHeight * window.devicePixelRatio,
+      shader: customShader,
       // color: 0xffffff,
     })
     this.groundMirror.receiveShadow = true
-    this.groundMirror.position.y = -0.2
+    this.groundMirror.position.y = 0
     this.groundMirror.rotateX(-Math.PI / 2)
     this.scene.add(this.groundMirror)
-  }
-
-  setGroundRefractor() {
-    // refractor
-
-    const refractorGeometry = new PlaneGeometry(90, 90)
-
-    this.refractor = new Refractor(refractorGeometry, {
-      color: 0x999999,
-      textureWidth: 1024,
-      textureHeight: 1024,
-      shader: WaterRefractionShader,
-    })
-
-    this.refractor.position.set(0, -0.1, 0)
-    this.refractor.rotateX(Math.PI / 2)
-
-    const dudvMap = LoaderManager.assets['waterdudv'].texture
-    dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping
-    this.refractor.material.uniforms.tDudv.value = dudvMap
-    this.scene.add(this.refractor)
   }
 
   /**
@@ -332,6 +326,10 @@ export default class MainScene {
     this.renderer.render(this.scene, this.camera)
 
     this.sphereMesh.position.y = Math.sin(time / 1000) + 2
+
+    if (this.groundMirror.material.uniforms) {
+      this.groundMirror.material.uniforms.time.value += 1
+    }
 
     this.stats.end()
     this.raf = window.requestAnimationFrame(this.draw)
