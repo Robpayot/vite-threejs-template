@@ -7,11 +7,22 @@ import {
   SphereGeometry,
   MeshMatcapMaterial,
   AxesHelper,
+  CircleGeometry,
+  PlaneGeometry,
+  MeshBasicMaterial,
+  HemisphereLight,
+  MeshLambertMaterial,
+  Fog,
+  DirectionalLight,
+  MeshPhongMaterial,
+  DoubleSide,
 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js'
 import Stats from 'stats-js'
 import LoaderManager from '@/js/managers/LoaderManager'
 import GUI from 'lil-gui'
+import { degToRad } from 'three/src/math/MathUtils'
 
 export default class MainScene {
   canvas
@@ -53,6 +64,8 @@ export default class MainScene {
     this.setAxesHelper()
 
     this.setSphere()
+    this.setGroundMirror()
+    this.setGround()
 
     this.handleResize()
 
@@ -94,9 +107,9 @@ export default class MainScene {
     const farPlane = 10000
 
     this.camera = new PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
-    this.camera.position.y = 5
-    this.camera.position.x = 5
-    this.camera.position.z = 5
+    this.camera.position.y = 2
+    this.camera.position.x = 7
+    this.camera.position.z = 7
     this.camera.lookAt(0, 0, 0)
 
     this.scene.add(this.camera)
@@ -132,7 +145,61 @@ export default class MainScene {
     const material = new MeshMatcapMaterial({ matcap: LoaderManager.assets['matcap'].texture })
 
     this.mesh = new Mesh(geometry, material)
+    this.mesh.position.y = 1
     this.scene.add(this.mesh)
+  }
+
+  setGround() {
+    // const geo = new PlaneGeometry(100, 100)
+    // const mat = new MeshBasicMaterial({ color: new Color(0xf8c291) })
+    // const mesh = new Mesh(geo, mat)
+    // mesh.rotation.x = degToRad(90)
+    // mesh.position.y = 5
+    // this.scene.add(mesh)
+
+    this.scene.background = new Color(0xB3EFFF)
+    this.scene.fog = new Fog(0xB3EFFF, 10, 500000)
+
+    const hemiLight = new HemisphereLight(0xFC7F44, 0x000000)
+    hemiLight.position.set(0, 20, 0)
+    this.scene.add(hemiLight)
+
+    const dirLight = new DirectionalLight(0xffffff)
+    dirLight.position.set(-3, 10, -10)
+    dirLight.castShadow = true
+    dirLight.shadow.camera.top = 2
+    dirLight.shadow.camera.bottom = -2
+    dirLight.shadow.camera.left = -2
+    dirLight.shadow.camera.right = 2
+    dirLight.shadow.camera.near = 0.1
+    dirLight.shadow.camera.far = 40
+    this.scene.add(dirLight)
+
+    // this.scene.add( new CameraHelper( dirLight.shadow.camera ) );
+
+    // ground
+
+    const mesh = new Mesh(new PlaneGeometry(1000000, 1000000), new MeshBasicMaterial({ color: 0xf8c291, depthWrite: false, side: DoubleSide }))
+    mesh.rotation.x = -Math.PI / 2
+    // mesh.receiveShadow = true
+
+    mesh.position.y = 10000
+    this.scene.add(mesh)
+  }
+
+  setGroundMirror() {
+    const geometry = new CircleGeometry(40, 64)
+    // Use Reflector
+    // https://github.com/mrdoob/three.js/blob/master/examples/jsm/objects/Reflector.js
+    this.groundMirror = new Reflector(geometry, {
+      clipBias: 0.03,
+      textureWidth: window.innerWidth * window.devicePixelRatio,
+      textureHeight: window.innerHeight * window.devicePixelRatio,
+      color: 0xb5b5b5,
+    })
+    this.groundMirror.position.y = 0
+    this.groundMirror.rotateX(-Math.PI / 2)
+    this.scene.add(this.groundMirror)
   }
 
   /**
