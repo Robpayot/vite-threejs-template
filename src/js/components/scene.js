@@ -181,8 +181,10 @@ export default class MainScene {
     const style = window.getComputedStyle(document.body)
     const color = style.getPropertyValue('--color-orange').replace(' ', '')
 
-    const textMat = new MeshBasicMaterial({ color: new Color(0xffffff) })
+    const textMat = new MeshLambertMaterial({ color: new Color(0xffffff) })
     this.textMesh = new Mesh(textGeo, textMat)
+    this.textMesh.receiveShadow = true
+    this.textMesh.castShadow = true
 
     this.textMesh.position.x = centerOffset
     this.textMesh.position.y = 0
@@ -202,12 +204,12 @@ export default class MainScene {
     this.scene.background = new Color(0xb3efff)
     this.scene.fog = new Fog(0xb3efff, 10, 500000)
 
-    const hemiLight = new HemisphereLight(0xfc7f44, 0x000000)
+    const hemiLight = new HemisphereLight(0xffffff, 0x000000)
     hemiLight.position.set(0, 20, 0)
     this.scene.add(hemiLight)
 
     const dirLight = new DirectionalLight(0xffffff)
-    dirLight.position.set(-3, 10, -10)
+    dirLight.position.set(-3, 10, 10)
     dirLight.castShadow = true
     dirLight.shadow.camera.top = 2
     dirLight.shadow.camera.bottom = -2
@@ -219,7 +221,7 @@ export default class MainScene {
 
     // this.scene.add( new CameraHelper( dirLight.shadow.camera ) );
 
-    // ground
+    // floor
 
     const mesh = new Mesh(
       new PlaneGeometry(1000000, 1000000),
@@ -230,18 +232,31 @@ export default class MainScene {
 
     mesh.position.y = 10000
     this.scene.add(mesh)
+
+    // ground
+
+    const groundMesh = new Mesh(
+      new PlaneGeometry(1000000, 1000000),
+      new MeshBasicMaterial({ color: 0xf8c291, depthWrite: false, side: DoubleSide })
+    )
+    groundMesh.rotation.x = -Math.PI / 2
+    groundMesh.receiveShadow = true
+
+    groundMesh.position.y = -5
+    this.scene.add(groundMesh)
   }
 
   setGroundMirror() {
-    const geometry = new CircleGeometry(40, 64)
+    const geometry = new CircleGeometry(20, 64)
     // Use Reflector
     // https://github.com/mrdoob/three.js/blob/master/examples/jsm/objects/Reflector.js
     this.groundMirror = new Reflector(geometry, {
       clipBias: 0.03,
       textureWidth: window.innerWidth * window.devicePixelRatio,
       textureHeight: window.innerHeight * window.devicePixelRatio,
-      color: 0xb5b5b5,
+      // color: 0xffffff,
     })
+    this.groundMirror.receiveShadow = true
     this.groundMirror.position.y = 0
     this.groundMirror.rotateX(-Math.PI / 2)
     this.scene.add(this.groundMirror)
