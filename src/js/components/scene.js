@@ -16,14 +16,17 @@ import {
   DirectionalLight,
   MeshPhongMaterial,
   DoubleSide,
+  RepeatWrapping,
 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { Reflector } from 'three/examples/jsm/objects/Reflector.js'
+import { Reflector } from 'three/addons/objects/Reflector.js'
+import { WaterRefractionShader } from 'three/addons/shaders/WaterRefractionShader.js'
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js'
 import Stats from 'stats-js'
 import LoaderManager from '@/js/managers/LoaderManager'
 import GUI from 'lil-gui'
 import { degToRad } from 'three/src/math/MathUtils'
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
+import { Refractor } from 'three/addons/objects/Refractor.js'
 
 export default class MainScene {
   canvas
@@ -53,6 +56,7 @@ export default class MainScene {
         texture: './img/matcap.png',
       },
       { name: 'robotoSlabFont', font: './fonts/Roboto_Slab_Regular.typeface.json' },
+      { name: 'waterdudv', texture: './img/waterdudv.jpg' },
     ]
 
     await LoaderManager.load(assets)
@@ -69,6 +73,7 @@ export default class MainScene {
     this.setText()
     this.setGroundMirror()
     this.setGround()
+    this.setGroundRefractor()
 
     this.handleResize()
 
@@ -257,9 +262,30 @@ export default class MainScene {
       // color: 0xffffff,
     })
     this.groundMirror.receiveShadow = true
-    this.groundMirror.position.y = 0
+    this.groundMirror.position.y = -0.2
     this.groundMirror.rotateX(-Math.PI / 2)
     this.scene.add(this.groundMirror)
+  }
+
+  setGroundRefractor() {
+    // refractor
+
+    const refractorGeometry = new PlaneGeometry(90, 90)
+
+    this.refractor = new Refractor(refractorGeometry, {
+      color: 0x999999,
+      textureWidth: 1024,
+      textureHeight: 1024,
+      shader: WaterRefractionShader,
+    })
+
+    this.refractor.position.set(0, -0.1, 0)
+    this.refractor.rotateX(Math.PI / 2)
+
+    const dudvMap = LoaderManager.assets['waterdudv'].texture
+    dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping
+    this.refractor.material.uniforms.tDudv.value = dudvMap
+    this.scene.add(this.refractor)
   }
 
   /**
