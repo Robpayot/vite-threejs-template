@@ -3,6 +3,7 @@ uniform sampler2D tDiffuse;
 uniform sampler2D tDudv;
 uniform float time;
 uniform float waveStrength;
+uniform float waveSpeed;
 uniform float transmission;
 
 varying vec4 vUv;
@@ -11,8 +12,6 @@ varying vec4 vUv;
 
 void main() {
   #include <logdepthbuf_fragment>
-
-  float waveSpeed = 0.003;
   // simple distortion (ripple) via dudv map (see https://www.youtube.com/watch?v=6B7IF6GOu7s)
   vec2 distortedUv = texture2D( tDudv, vec2( vUv.x + time * waveSpeed, vUv.y ) ).rg * waveStrength;
   distortedUv = vUv.xy + vec2( distortedUv.x, distortedUv.y + time * waveSpeed );

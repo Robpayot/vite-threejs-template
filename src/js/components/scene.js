@@ -51,6 +51,7 @@ export default class MainScene {
     skyReflectorColor: '#010033',
     reflectorTransmission: 0.6,
     waveStrength: 0.05,
+    waveSpeed: 2.5,
   }
 
   constructor() {
@@ -290,6 +291,7 @@ export default class MainScene {
     customShader.uniforms.waveStrength = { value: this.guiObj.waveStrength }
     customShader.uniforms.time = { value: 0 }
     customShader.uniforms.transmission = { value: this.guiObj.reflectorTransmission }
+    customShader.uniforms.waveSpeed = { value: this.guiObj.waveSpeed / 1000 }
 
     this.reflector = new Reflector(geometry, {
       clipBias: 0.1,
@@ -326,7 +328,7 @@ export default class MainScene {
       // depthTest: false,
       // depthWrite: false,
       transparent: true,
-      map: LoaderManager.assets['particle'].texture
+      map: LoaderManager.assets['particle'].texture,
     })
     const mesh = new Points(geometry, material)
 
@@ -370,6 +372,10 @@ export default class MainScene {
 
     gui.add(this.guiObj, 'waveStrength', 0, 0.5).onChange(() => {
       this.reflector.material.uniforms.waveStrength.value = this.guiObj.waveStrength
+    })
+
+    gui.add(this.guiObj, 'waveSpeed', 0, 5).onChange(() => {
+      this.reflector.material.uniforms.waveSpeed.value = this.guiObj.waveSpeed / 1000
     })
   }
   /**
