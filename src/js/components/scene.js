@@ -7,16 +7,19 @@ import {
   SphereGeometry,
   MeshMatcapMaterial,
   AxesHelper,
-  CircleGeometry,
   PlaneGeometry,
   MeshBasicMaterial,
-  HemisphereLight,
   MeshLambertMaterial,
   Fog,
   DirectionalLight,
-  MeshPhongMaterial,
   DoubleSide,
   RepeatWrapping,
+  CameraHelper,
+  AmbientLight,
+  BufferGeometry,
+  BufferAttribute,
+  PointsMaterial,
+  Points,
 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Reflector } from 'three/addons/objects/Reflector.js'
@@ -25,10 +28,9 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js'
 import Stats from 'stats-js'
 import LoaderManager from '@/js/managers/LoaderManager'
 import GUI from 'lil-gui'
-import { degToRad } from 'three/src/math/MathUtils'
-import { Refractor } from 'three/addons/objects/Refractor.js'
 import vertexShader from '../glsl/main.vert'
 import fragmentShader from '../glsl/main.frag'
+import { randFloat } from 'three/src/math/MathUtils'
 
 export default class MainScene {
   canvas
@@ -40,8 +42,10 @@ export default class MainScene {
   width
   height
   guiObj = {
-    y: 0,
-    showTitle: true,
+    skyColor: '#030033',
+    reflectorColor: '#030033',
+    reflectorTransmission: 0.6,
+    waveStrength: 0.05,
   }
 
   constructor() {
@@ -73,8 +77,9 @@ export default class MainScene {
 
     this.setSphere()
     this.setText()
-    this.setGroundMirror()
-    this.setGround()
+    this.setReflector()
+    this.setLights()
+    this.setStars()
     // this.setGroundRefractor()
 
     this.handleResize()
@@ -100,7 +105,7 @@ export default class MainScene {
    */
   setScene() {
     this.scene = new Scene()
-    this.scene.background = new Color(0xffffff)
+    this.scene.background = new Color(this.guiObj.skyColor)
   }
 
   /**
@@ -171,7 +176,7 @@ export default class MainScene {
     const textGeo = new TextGeometry('How To Code That?', {
       font: LoaderManager.assets['robotoSlabFont'].font,
       size: 0.8,
-      height: 0.25,
+      height: 0.2,
       curveSegments: 12,
       bevelEnabled: false,
       // bevelThickness: 10,
@@ -200,61 +205,19 @@ export default class MainScene {
     this.scene.add(this.textMesh)
   }
 
-  setGround() {
-    // const geo = new PlaneGeometry(100, 100)
-    // const mat = new MeshBasicMaterial({ color: new Color(0xf8c291) })
-    // const mesh = new Mesh(geo, mat)
-    // mesh.rotation.x = degToRad(90)
-    // mesh.position.y = 5
-    // this.scene.add(mesh)
-
-    this.scene.background = new Color(0xb3efff)
-    this.scene.fog = new Fog(0xb3efff, 10, 500000)
-
-    const hemiLight = new HemisphereLight(0xffffff, 0x000000)
-    hemiLight.position.set(0, 20, 0)
-    this.scene.add(hemiLight)
-
+  setLights() {
     const dirLight = new DirectionalLight(0xffffff)
     dirLight.position.set(-3, 10, 10)
-    dirLight.castShadow = true
-    dirLight.shadow.camera.top = 2
-    dirLight.shadow.camera.bottom = -2
-    dirLight.shadow.camera.left = -2
-    dirLight.shadow.camera.right = 2
-    dirLight.shadow.camera.near = 0.1
-    dirLight.shadow.camera.far = 40
     this.scene.add(dirLight)
 
-    // this.scene.add( new CameraHelper( dirLight.shadow.camera ) );
+    // this.scene.add(new CameraHelper(dirLight.shadow.camera))
 
-    // floor
-
-    const mesh = new Mesh(
-      new PlaneGeometry(1000000, 1000000),
-      new MeshBasicMaterial({ color: 0xf8c291, depthWrite: false, side: DoubleSide })
-    )
-    mesh.rotation.x = -Math.PI / 2
-    // mesh.receiveShadow = true
-
-    mesh.position.y = 10000
-    this.scene.add(mesh)
-
-    // ground
-
-    const groundMesh = new Mesh(
-      new PlaneGeometry(1000000, 1000000),
-      new MeshBasicMaterial({ color: 0xf8c291, depthWrite: false, side: DoubleSide })
-    )
-    groundMesh.rotation.x = -Math.PI / 2
-    groundMesh.receiveShadow = true
-
-    groundMesh.position.y = -5
-    this.scene.add(groundMesh)
+    const light = new AmbientLight(0xcccccc) // soft white light
+    this.scene.add(light)
   }
 
-  setGroundMirror() {
-    const geometry = new CircleGeometry(20, 64)
+  setReflector() {
+    const geometry = new PlaneGeometry(500, 500)
     // Use Reflector
     // https://github.com/mrdoob/three.js/blob/master/examples/jsm/objects/Reflector.js
 
@@ -265,21 +228,44 @@ export default class MainScene {
     const dudvMap = LoaderManager.assets['waterdudv'].texture
     dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping
     customShader.uniforms.tDudv = { value: dudvMap }
-    customShader.uniforms.waveStrength = { value: 0.1 }
+    customShader.uniforms.waveStrength = { value: this.guiObj.waveStrength }
     customShader.uniforms.time = { value: 0 }
+    customShader.uniforms.transmission = { value: this.guiObj.reflectorTransmission }
 
     // https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/WaterRefractionShader.js
-    this.groundMirror = new Reflector(geometry, {
+    this.reflector = new Reflector(geometry, {
       clipBias: 0.03,
       textureWidth: window.innerWidth * window.devicePixelRatio,
       textureHeight: window.innerHeight * window.devicePixelRatio,
       shader: customShader,
-      // color: 0xffffff,
+      color: this.guiObj.reflectorColor,
     })
-    this.groundMirror.receiveShadow = true
-    this.groundMirror.position.y = 0
-    this.groundMirror.rotateX(-Math.PI / 2)
-    this.scene.add(this.groundMirror)
+    this.reflector.receiveShadow = true
+    this.reflector.position.y = 0
+    this.reflector.rotateX(-Math.PI / 2)
+    this.scene.add(this.reflector)
+  }
+
+  setStars() {
+    const geometry = new BufferGeometry()
+    // create a simple square shape. We duplicate the top left and bottom right
+    // vertices because each vertex needs to appear once per triangle.
+
+    const vertices = []
+    const nb = 1000
+
+    const range = 1000
+
+    for (let i = 0; i < nb; i++) {
+      const point = [randFloat(-range, range), randFloat(20, 200), randFloat(-range, range)]
+      vertices.push(...point)
+    }
+
+    // itemSize = 3 because there are 3 values (components) per vertex
+    geometry.setAttribute('position', new BufferAttribute(new Float32Array(vertices), 3))
+    const material = new PointsMaterial({ color: 0xffffff, size: 2 })
+    const mesh = new Points(geometry, material)
+    this.scene.add(mesh)
   }
 
   /**
@@ -292,15 +278,21 @@ export default class MainScene {
   }
 
   setGUI() {
-    const titleEl = document.querySelector('.main-title')
     const gui = new GUI()
-    gui.add(this.guiObj, 'y', -3, 3).onChange(this.guiChange)
-    gui
-      .add(this.guiObj, 'showTitle')
-      .name('show title')
-      .onChange(() => {
-        titleEl.style.display = this.guiObj.showTitle ? 'block' : 'none'
-      })
+    gui.addColor(this.guiObj, 'skyColor').onChange(() => {
+      this.scene.background = new Color(this.guiObj.skyColor)
+    })
+    gui.addColor(this.guiObj, 'reflectorColor').onChange(() => {
+      this.reflector.material.uniforms.color.value = new Color(this.guiObj.reflectorColor)
+    })
+
+    gui.add(this.guiObj, 'reflectorTransmission', 0, 1).onChange(() => {
+      this.reflector.material.uniforms.transmission.value = this.guiObj.reflectorTransmission
+    })
+
+    gui.add(this.guiObj, 'waveStrength', 0, 1).onChange(() => {
+      this.reflector.material.uniforms.waveStrength.value = this.guiObj.waveStrength
+    })
   }
   /**
    * List of events
@@ -327,8 +319,8 @@ export default class MainScene {
 
     this.sphereMesh.position.y = Math.sin(time / 1000) + 2
 
-    if (this.groundMirror.material.uniforms) {
-      this.groundMirror.material.uniforms.time.value += 1
+    if (this.reflector.material.uniforms) {
+      this.reflector.material.uniforms.time.value += 1
     }
 
     this.stats.end()
