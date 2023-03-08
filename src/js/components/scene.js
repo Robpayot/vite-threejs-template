@@ -44,7 +44,7 @@ export default class MainScene {
   width
   height
   guiObj = {
-    skyReflectorColor: '#010033',
+    skyReflectorColor: '#01002e',
     reflectorTransmission: 0.6,
     waveStrength: 0.05,
     waveSpeed: 2.5,
@@ -101,7 +101,7 @@ export default class MainScene {
         z: this.camera.position.z + 5,
       },
       {
-        duration: 3,
+        duration: 2,
         ease: 'expo.out',
         x: this.camera.position.x,
         z: this.camera.position.z,
