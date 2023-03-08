@@ -5,16 +5,12 @@ import {
   PerspectiveCamera,
   Mesh,
   SphereGeometry,
-  MeshMatcapMaterial,
   AxesHelper,
   PlaneGeometry,
   MeshBasicMaterial,
   MeshLambertMaterial,
-  Fog,
   DirectionalLight,
-  DoubleSide,
   RepeatWrapping,
-  CameraHelper,
   AmbientLight,
   BufferGeometry,
   BufferAttribute,
@@ -27,7 +23,7 @@ import {
 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Reflector } from 'three/addons/objects/Reflector.js'
-import { WaterRefractionShader } from 'three/addons/shaders/WaterRefractionShader.js'
+// import { WaterRefractionShader } from 'three/addons/shaders/WaterRefractionShader.js'
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js'
 import Stats from 'stats-js'
 import LoaderManager from '@/js/managers/LoaderManager'
@@ -95,6 +91,28 @@ export default class MainScene {
 
     // start RAF
     this.events()
+
+    // this.controls.enabled = false
+
+    gsap.fromTo(
+      this.camera.position,
+      {
+        x: this.camera.position.x - 10,
+        z: this.camera.position.z + 5,
+      },
+      {
+        duration: 3,
+        ease: 'expo.out',
+        x: this.camera.position.x,
+        z: this.camera.position.z,
+        onUpdate: () => {
+          this.controls.update()
+        },
+        onComplete: () => {
+          // this.controls.enabled = true
+        },
+      }
+    )
   }
 
   /**
@@ -132,7 +150,7 @@ export default class MainScene {
 
     this.camera = new PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
     this.camera.position.y = 1
-    this.camera.position.x = 10
+    this.camera.position.x = 8
     this.camera.position.z = 7
     this.camera.lookAt(0, 0, 0)
 
@@ -295,8 +313,8 @@ export default class MainScene {
 
     this.reflector = new Reflector(geometry, {
       clipBias: 0.1,
-      textureWidth: window.innerWidth * window.devicePixelRatio,
-      textureHeight: window.innerHeight * window.devicePixelRatio,
+      textureWidth: window.innerWidth,
+      textureHeight: window.innerHeight,
       shader: customShader,
       color: this.guiObj.skyReflectorColor,
     })
