@@ -5,15 +5,31 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextureLoader } from 'three'
 
 class LoaderManager {
-  assets
-  constructor() {
-    this.assets = {} // Dictionary of assets, can be different type, gltf, texture, img, font, feel free to make a Enum if using TypeScript
+  #assets
+  #textureLoader = new TextureLoader()
+  #GLTFLoader = new GLTFLoader()
+  #OBJLoader = new OBJLoader()
+  #DRACOLoader = new DRACOLoader()
+  #FontLoader = new FontLoader()
 
-    this.textureLoader = new TextureLoader()
-    this.GLTFLoader = new GLTFLoader()
-    this.OBJLoader = new OBJLoader()
-    this.DRACOLoader = new DRACOLoader()
-    this.FontLoader = new FontLoader()
+  constructor() {
+    this.#assets = {} // Dictionary of assets, can be different type, gltf, texture, img, font, feel free to make a Enum if using TypeScript
+  }
+
+  get assets() {
+    return this.#assets
+  }
+
+  set assets(value) {
+    this.#assets = value
+  }
+
+  /**
+   * Public method
+   */
+
+  get(name) {
+    return this.#assets[name]
   }
 
   load = (data) =>
@@ -22,8 +38,8 @@ class LoaderManager {
       for (let i = 0; i < data.length; i++) {
         const { name, gltf, texture, img, font, obj } = data[i]
 
-        if (!this.assets[name]) {
-          this.assets[name] = {}
+        if (!this.#assets[name]) {
+          this.#assets[name] = {}
         }
 
         if (gltf) {
@@ -52,13 +68,13 @@ class LoaderManager {
 
   loadGLTF(url, name) {
     return new Promise((resolve) => {
-      this.DRACOLoader.setDecoderPath('../scene/vendor/three/draco/')
-      this.GLTFLoader.setDRACOLoader(this.DRACOLoader)
+      this.#DRACOLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/')
+      this.#GLTFLoader.setDRACOLoader(this.#DRACOLoader)
 
-      this.GLTFLoader.load(
+      this.#GLTFLoader.load(
         url,
         (result) => {
-          this.assets[name].gltf = result
+          this.#assets[name].gltf = result
           resolve(result)
         },
         undefined,
@@ -70,12 +86,12 @@ class LoaderManager {
   }
 
   loadTexture(url, name) {
-    if (!this.assets[name]) {
-      this.assets[name] = {}
+    if (!this.#assets[name]) {
+      this.#assets[name] = {}
     }
     return new Promise((resolve) => {
-      this.textureLoader.load(url, (result) => {
-        this.assets[name].texture = result
+      this.#textureLoader.load(url, (result) => {
+        this.#assets[name].texture = result
         resolve(result)
       })
     })
@@ -86,7 +102,7 @@ class LoaderManager {
       const image = new Image()
 
       image.onload = () => {
-        this.assets[name].img = image
+        this.#assets[name].img = image
         resolve(image)
       }
 
@@ -97,12 +113,12 @@ class LoaderManager {
   loadFont(url, name) {
     // you can convert font to typeface.json using https://gero3.github.io/facetype.js/
     return new Promise((resolve) => {
-      this.FontLoader.load(
+      this.#FontLoader.load(
         url,
 
         // onLoad callback
         (font) => {
-          this.assets[name].font = font
+          this.#assets[name].font = font
           resolve(font)
         },
 
@@ -125,12 +141,12 @@ class LoaderManager {
   loadObj(url, name) {
     return new Promise((resolve) => {
       // load a resource
-      this.OBJLoader.load(
+      this.#OBJLoader.load(
         // resource URL
         url,
         // called when resource is loaded
         (object) => {
-          this.assets[name].obj = object
+          this.#assets[name].obj = object
           resolve(object)
         },
         // onProgress callback

@@ -14,21 +14,22 @@ import LoaderManager from '@/js/managers/LoaderManager'
 import GUI from 'lil-gui'
 
 export default class MainScene {
-  canvas
-  renderer
-  scene
-  camera
-  controls
-  stats
-  width
-  height
-  guiObj = {
+  #canvas
+  #renderer
+  #scene
+  #camera
+  #controls
+  #stats
+  #width
+  #height
+  #mesh
+  #guiObj = {
     y: 0,
     showTitle: true,
   }
 
   constructor() {
-    this.canvas = document.querySelector('.scene')
+    this.#canvas = document.querySelector('.scene')
 
     this.init()
   }
@@ -65,8 +66,8 @@ export default class MainScene {
    * https://threejs.org/docs/?q=rend#api/en/renderers/WebGLRenderer
    */
   setRender() {
-    this.renderer = new WebGLRenderer({
-      canvas: this.canvas,
+    this.#renderer = new WebGLRenderer({
+      canvas: this.#canvas,
       antialias: true,
     })
   }
@@ -76,8 +77,8 @@ export default class MainScene {
    * https://threejs.org/docs/?q=scene#api/en/scenes/Scene
    */
   setScene() {
-    this.scene = new Scene()
-    this.scene.background = new Color(0xffffff)
+    this.#scene = new Scene()
+    this.#scene.background = new Color(0xffffff)
   }
 
   /**
@@ -88,18 +89,18 @@ export default class MainScene {
    * https://threejs.org/docs/?q=pers#api/en/cameras/PerspectiveCamera
    */
   setCamera() {
-    const aspectRatio = this.width / this.height
+    const aspectRatio = this.#width / this.#height
     const fieldOfView = 60
     const nearPlane = 0.1
     const farPlane = 10000
 
-    this.camera = new PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
-    this.camera.position.y = 5
-    this.camera.position.x = 5
-    this.camera.position.z = 5
-    this.camera.lookAt(0, 0, 0)
+    this.#camera = new PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane)
+    this.#camera.position.y = 5
+    this.#camera.position.x = 5
+    this.#camera.position.z = 5
+    this.#camera.lookAt(0, 0, 0)
 
-    this.scene.add(this.camera)
+    this.#scene.add(this.#camera)
   }
 
   /**
@@ -107,9 +108,9 @@ export default class MainScene {
    * https://threejs.org/docs/?q=orbi#examples/en/controls/OrbitControls
    */
   setControls() {
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-    this.controls.enableDamping = true
-    // this.controls.dampingFactor = 0.04
+    this.#controls = new OrbitControls(this.#camera, this.#renderer.domElement)
+    this.#controls.enableDamping = true
+    // this.#controls.dampingFactor = 0.04
   }
 
   /**
@@ -118,7 +119,7 @@ export default class MainScene {
    */
   setAxesHelper() {
     const axesHelper = new AxesHelper(3)
-    this.scene.add(axesHelper)
+    this.#scene.add(axesHelper)
   }
 
   /**
@@ -131,28 +132,28 @@ export default class MainScene {
     const geometry = new SphereGeometry(1, 32, 32)
     const material = new MeshMatcapMaterial({ matcap: LoaderManager.assets['matcap'].texture })
 
-    this.mesh = new Mesh(geometry, material)
-    this.scene.add(this.mesh)
+    this.#mesh = new Mesh(geometry, material)
+    this.#scene.add(this.#mesh)
   }
 
   /**
    * Build stats to display fps
    */
   setStats() {
-    this.stats = new Stats()
-    this.stats.showPanel(0)
-    document.body.appendChild(this.stats.dom)
+    this.#stats = new Stats()
+    this.#stats.showPanel(0)
+    document.body.appendChild(this.#stats.dom)
   }
 
   setGUI() {
     const titleEl = document.querySelector('.main-title')
     const gui = new GUI()
-    gui.add(this.guiObj, 'y', -3, 3).onChange(this.guiChange)
+    gui.add(this.#guiObj, 'y', -3, 3).onChange(this.guiChange)
     gui
-      .add(this.guiObj, 'showTitle')
+      .add(this.#guiObj, 'showTitle')
       .name('show title')
       .onChange(() => {
-        titleEl.style.display = this.guiObj.showTitle ? 'block' : 'none'
+        titleEl.style.display = this.#guiObj.showTitle ? 'block' : 'none'
       })
   }
   /**
@@ -173,12 +174,12 @@ export default class MainScene {
    */
   draw = () => {
     // now: time in ms
-    this.stats.begin()
+    this.#stats.begin()
 
-    if (this.controls) this.controls.update() // for damping
-    this.renderer.render(this.scene, this.camera)
+    if (this.#controls) this.#controls.update() // for damping
+    this.#renderer.render(this.#scene, this.#camera)
 
-    this.stats.end()
+    this.#stats.end()
     this.raf = window.requestAnimationFrame(this.draw)
   }
 
@@ -187,20 +188,20 @@ export default class MainScene {
    * on the new window width and height and the renderer
    */
   handleResize = () => {
-    this.width = window.innerWidth
-    this.height = window.innerHeight
+    this.#width = window.innerWidth
+    this.#height = window.innerHeight
 
     // Update camera
-    this.camera.aspect = this.width / this.height
-    this.camera.updateProjectionMatrix()
+    this.#camera.aspect = this.#width / this.#height
+    this.#camera.updateProjectionMatrix()
 
     const DPR = window.devicePixelRatio ? window.devicePixelRatio : 1
 
-    this.renderer.setPixelRatio(DPR)
-    this.renderer.setSize(this.width, this.height)
+    this.#renderer.setPixelRatio(DPR)
+    this.#renderer.setSize(this.#width, this.#height)
   }
 
   guiChange = () => {
-    if (this.mesh) this.mesh.position.y = this.guiObj.y
+    if (this.#mesh) this.#mesh.position.y = this.#guiObj.y
   }
 }
