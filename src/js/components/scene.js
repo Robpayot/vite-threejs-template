@@ -147,14 +147,15 @@ export default class MainScene {
 
   setGUI() {
     const titleEl = document.querySelector('.main-title')
+
+    const handleChange = () => {
+      this.#mesh.position.y = this.#guiObj.y
+      titleEl.style.display = this.#guiObj.showTitle ? 'block' : 'none'
+    }
+
     const gui = new GUI()
-    gui.add(this.#guiObj, 'y', -3, 3).onChange(this.guiChange)
-    gui
-      .add(this.#guiObj, 'showTitle')
-      .name('show title')
-      .onChange(() => {
-        titleEl.style.display = this.#guiObj.showTitle ? 'block' : 'none'
-      })
+    gui.add(this.#guiObj, 'y', -3, 3).onChange(handleChange)
+    gui.add(this.#guiObj, 'showTitle').name('show title').onChange(handleChange)
   }
   /**
    * List of events
@@ -199,9 +200,5 @@ export default class MainScene {
 
     this.#renderer.setPixelRatio(DPR)
     this.#renderer.setSize(this.#width, this.#height)
-  }
-
-  guiChange = () => {
-    if (this.#mesh) this.#mesh.position.y = this.#guiObj.y
   }
 }
